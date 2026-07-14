@@ -1,29 +1,29 @@
 import os
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-import requests
+import httpx  # Tezroq va asinxron ishlash uchun requests o'rniga httpx
 
 app = FastAPI()
 
-# GitHub'dagi index.html faylini o'qish uchun sozlamalar
+# index.html faylini o'qish uchun sozlamalar
 templates = Jinja2Templates(directory=".")
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-MINI_APP_URL = os.getenv("MINI_APP_URL", "https://tongarm.onrender.com/")
-# Siz uchun yaratgan rasmimizning to'g'ridan-to'g'ri havolasi
-IMAGE_URL = "https://raw.githubusercontent.com/otabekturamirzayev/gram-ton-earn/main/71855220426954431.jpeg"  # Agar Github'ga rasmni yuklagan bo'lsangiz, shuni yoki pastdagi havolani qo'ying:
-# Muqobil ravishda to'g'ridan-to'g'ri ushbu havolani ishlatsangiz ham bo'ladi:
+BOT_TOKEN = os.getenv("8991748929:AAFsX1ey49CBSDsC5Zah6ZFkG9QFDeYevjU")
+MINI_APP_URL = os.getenv "https://tongarm.onrender.com/"
 IMAGE_URL = "https://i.ibb.co/3mN9Y7r/gram-ton-earn.jpg" # Biz yaratgan rasm havolasi
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.post("/")
+# Webhook manzili endi aniq '/webhook' bo'ldi
+@app.post("/webhook")
 async def telegram_webhook(request: Request):
-    data = await request.json()
+    try:
+        data = await request.json()
+    except Exception:
+        return {"status": "invalid json"}
     
     if "message" in data:
         message = data["message"]
@@ -31,18 +31,16 @@ async def telegram_webhook(request: Request):
         text = message.get("text", "")
         
         if text.startswith("/start"):
-            # Inglizcha chiroyli va jozibador matn
             caption_text = (
-                "👋 Welcome to GRAM TON EARN!\n\n"
-                "The ultimate Telegram Mini App where you can earn real $TON coins just by inviting your friends and completing simple daily tasks! 💎\n\n"
-                "🔥 How to Start?\n"
-                "1️⃣ Tap the 'Launch App' button below.\n"
+                "👋 *Welcome to GRAM TON EARN!*\n\n"
+                "The ultimate Telegram Mini App where you can earn real *$TON* coins just by inviting your friends and completing simple daily tasks! 💎\n\n"
+                "🔥 *How to Start?*\n"
+                "1️⃣ Tap the *'Launch App'* button below.\n"
                 "2️⃣ Complete easy social tasks.\n"
-                "3️⃣ Invite 5 friends and get 3 TON instantly!\n\n"
-                "🚀 *Fast, secure, and built on the TON Blockchain. Let's grow together!*"
+                "3️⃣ Invite 5 friends and get *3 TON* instantly!\n\n"
+                "🚀 _Fast, secure, and built on the TON Blockchain. Let's grow together!_"
             )
             
-            # Mini App ochuvchi Inline Tugma
             reply_markup = {
                 "inline_keyboard": [
                     [
@@ -54,13 +52,12 @@ async def telegram_webhook(request: Request):
                     [
                         {
                             "text": "📢 Join Community",
-                            "url": "https://t.me/Gram5000prize_bot"  # O'z kanalingiz linkini qo'ysangiz ham bo'ladi
+                            "url": "https://t.me/Gram5000prize_bot"
                         }
                     ]
                 ]
             }
             
-            # Telegram'ga rasm, matn va tugmani yuborish (sendPhoto)
             payload = {
                 "chat_id": chat_id,
                 "photo": IMAGE_URL,
@@ -70,6 +67,8 @@ async def telegram_webhook(request: Request):
             }
             
             telegram_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto"
-            requests.post(telegram_url, json=payload)
+            # Asinxron so'rov yuboramiz
+            async with httpx.AsyncClient() as client:
+                await client.post(telegram_url, json=payload)
             
     return {"status": "ok"}
