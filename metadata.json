@@ -1,0 +1,6 @@
+{
+  "name": "Gram 5000 Prize",
+  "description": "Telegram Mini App featuring a referral system, 5000 Gram automated statistics, withdrawal management, and an administration panel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
